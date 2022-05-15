@@ -53,6 +53,7 @@ def get_demotest_file_names(outpath):
 
     # outfile = os.path.join(outdir, 'outfile.out')
     progressFile = filenameProgress
+    outfile = filename_outfile
     return outfile, progressFile
 
 # =============================================================================================
@@ -61,7 +62,7 @@ def get_demotest_file_names(outpath):
 def run_simulation(datapath, savfile, snpfile, outfile, progressFile):
 
     import psspy
-    psspy.psseinit()
+    psspy.psseinit(50000)
 
     if datapath:
         savfile = os.path.join(datapath, savfile)
@@ -146,9 +147,11 @@ def run_simulation(datapath, savfile, snpfile, outfile, progressFile):
         load_increment_bus001 = 22.0
 
     if run_number == 3:
-        ierr, xarray = abrncplx(3, 1, 1, 1, 1, 'RX')
+        ierr, xarray = psspy.abrncplx(-1, 1, 1, 1, 1, 'RX')
         print('ierr for abrncplx = ', ierr)
         print('xarray for abrncplx = ', xarray)
+        checkpointString = ' Ohaiyo!? ' + str(ierr) + " " + str(xarray[0]) +'\n'
+        psspy.progress(checkpointString)
 
     for t in np.arange(t_start, t_end + t_increment, t_increment):
         print('The time is now:', round(t, 2))
@@ -346,7 +349,7 @@ def test1_data_extraction(printCommand, show, outpath=None):
     chnfobj.txtout(channels=list(chosen_channels))
 
     print('\n Testing call to xlsout')
-    filename_xlsx = r'outfile' + run_number + '.xlsx'
+
     if os.path.exists(filename_xlsx):
         os.remove(filename_xlsx)
 
@@ -357,7 +360,7 @@ if __name__ == '__main__':
     import psse34  #noqa: F401
     simulation_inputs_folder_name = 'simulation_inputs/'
     simulation_outputs_folder_name = 'simulation_outputs/'
-    run_number = 3;
+    run_number = 1;
     system_name = 'ieee9'
     # system_name = 'ieee39'
     printCommand = 0
@@ -383,10 +386,15 @@ if __name__ == '__main__':
     # snpfile = system_name + '_snp.snp'
     # snpfile = system_name + '_snp1.snp' #D=0 for all generators
     # snpfile = system_name + '_snp2.snp' #D=0, No stabilizers
-    snpfile = simulation_outputs_folder_name + \
+    snpfile = simulation_inputs_folder_name + \
     system_name + '_snp3.snp' #No Governors
 
-    outfile = system_name + '_outfile' + str(run_number) + '.out'
+    filename_xlsx = simulation_outputs_folder_name + \
+    system_name + \
+    '_outfile_' + str(run_number) + '.xlsx'
+    filename_outfile = simulation_outputs_folder_name + \
+    system_name + \
+    '_outfile_' + str(run_number) + '.out'
     filenameProgress = simulation_outputs_folder_name + \
     system_name + \
     '_progress_dynamic' + str(run_number) + '.txt'
@@ -404,4 +412,4 @@ if __name__ == '__main__':
 
     end = time.time()
     print('Time elapsed = ', end-start)
-    winsound.Beep(freq, duration)
+    # winsound.Beep(freq, duration)
