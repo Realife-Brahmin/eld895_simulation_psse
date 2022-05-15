@@ -187,7 +187,7 @@ def run_simulation(datapath, savfile, snpfile, outfile, progressFile):
             [change_percent1, 0.0, 0.0, 0.0, 0.0, -0.0, 0.0])
 
             # dp1 = current_load1[0]/60 * t_increment
-            if current_load1[0] >= 200 and run_number == 2:
+            if current_load1[0] >= 120 and run_number == 2:
                 dp1 = 0
             else:
                 dp1 = current_load1[0] * change_percent1/100
@@ -369,7 +369,7 @@ if __name__ == '__main__':
     t_increment = 0.1
 
     if system_name == 'ieee9':
-        chosen_channels = np.arange(1, 47)
+        chosen_channels = np.arange(1, 42)
     elif system_name == 'ieee39':
         chosen_channels = np.arange(1, 140)
     else:
@@ -397,7 +397,7 @@ if __name__ == '__main__':
     '_outfile_' + str(run_number) + '.out'
     filenameProgress = simulation_outputs_folder_name + \
     system_name + \
-    '_progress_dynamic' + str(run_number) + '.txt'
+    '_progress_dynamic_' + str(run_number) + '.txt'
     simulationType = 'Dynamic State Simulation'
 
     datapath = None
