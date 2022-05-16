@@ -1,7 +1,6 @@
 import os
 import sys  # noqa: F401
 import contextlib
-import collections
 import pssepath
 pssepath.add_pssepath()
 import numpy as np
@@ -32,8 +31,7 @@ def run_simulation(datapath, savfile, snpfile, outfile, progressFile):
 
     t_start = 1.00
     t_end = 600.00
-    # t_increment = 3.0/30
-    # t_increment = 0.1
+
     if system_name == 'ieee9':
         load_increment_bus001 = 27.0
         load_increment_bus002 = 29.0
