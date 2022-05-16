@@ -7,27 +7,13 @@ pssepath.add_pssepath()
 import numpy as np
 import psspy
 import excelpy
-import tail
+
 import time
 import winsound
 duration = 1000  # milliseconds duration of alert sound
 freq = 440  # also for alert sound
 
-
 start = time.time()
-
-
-
-# =============================================================================================
-
-
-def lines_that_contain(string, fp):
-    return [line for line in fp if string in line]
-
-
-
-# =============================================================================================
-# Run Dynamic simulation on system_name to generate .out files
 
 def run_simulation(datapath, savfile, snpfile, outfile, progressFile):
 
@@ -230,38 +216,10 @@ def run_simulation(datapath, savfile, snpfile, outfile, progressFile):
         checkpointString = ' Yebuseyo!? ' + str(round(t, 2)) +'\n'
         psspy.progress(checkpointString)
 
-        with open(filenameProgress, "r") as f:
-            latest_lines = tail.tail(filenameProgress, 1000)
-            allowLimitBreach = 1
-            exitFlag = 0
-
-            for item in latest_lines:
-                if "beyond" in item:
-                    anomalies = \
-                    lines_that_contain("beyond", latest_lines)
-                    # print(anomalies)
-                    if allowLimitBreach:
-                        print('We''ll let it slide.\n')
-                        exitFlag = 0
-                    else:
-                        print('\nThis simulation stops right here! \
-                         This is because:\n')
-                        exitFlag = 1
-
-                if "Network not converged" in item:
-                    print('\nThis simulation stops right here! This is because:\n')
-                    anomalies = \
-                    lines_that_contain('Network not converged', latest_lines)
-                    # print(anomalies)
-                    exitFlag = 1
-                    break
-
-            if exitFlag:
-                break
-            # else:
-            #     print('all good! Still no divergence or limit breaches.')
-
-
+        from check_simulation_health import check_simulation_health
+        exitFlag = check_simulation_health(filenameProgress, allowLimitBreach)
+        if exitFlag:
+            break
 
     psspy.lines_per_page_one_device(2, 10000000)
     psspy.progress_output(1, "", [0, 0])
@@ -303,10 +261,6 @@ if __name__ == '__main__':
 
     savfile = simulation_inputs_folder_name \
     + system_name + '_cnv.sav'
-    # savfile = system_name + '_cnv1.sav' #MBase and
-    # PMax increased as per OPAL RT ieee9 bus system parameters
-
-
 
     # snpfile = system_name + '_snp.snp'
     # snpfile = system_name + '_snp1.snp' #D=0 for all generators
