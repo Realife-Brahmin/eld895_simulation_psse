@@ -16,27 +16,7 @@ freq = 440  # also for alert sound
 
 start = time.time()
 
-def check_psse_example_folder():
-    # if called from PSSE's Example Folder,
-    # create report in subfolder 'Output_Pyscript'
-    # and return the path for the same
-    outdir = os.getcwd()  # returns the string containing the current directory
-    cwd = outdir.lower()  # returns the path but in all lowercase
-    # find returns the index of the first occurrence
-    # of the string
-    i = cwd.find('psse_files')
-    j = cwd.find('python_practice_psse')
-    k = cwd.find('e0040')
-    # print(i, j, k)
-    # The if statement below basically checks if the current directory
-    # is the EXAMPLES folder of PSSE and makes a folder called
-    # Output_Pyscript if it is not already made
-    if i > 0 and j > i and k > j:  # called from Example folder
-        # outdir = os.path.join(outdir, 'Output_Pyscript1')
-        if not os.path.exists(outdir):
-            os.mkdir(outdir)
 
-        return outdir
 
 # =============================================================================================
 
@@ -44,17 +24,7 @@ def check_psse_example_folder():
 def lines_that_contain(string, fp):
     return [line for line in fp if string in line]
 
-def get_demotest_file_names(outpath):
 
-    if outpath:
-        outdir = outpath
-    else:
-        outdir = check_psse_example_folder()
-
-    # outfile = os.path.join(outdir, 'outfile.out')
-    progressFile = filenameProgress
-    outfile = filename_outfile
-    return outfile, progressFile
 
 # =============================================================================================
 # Run Dynamic simulation on system_name to generate .out files
@@ -299,68 +269,23 @@ def run_simulation(datapath, savfile, snpfile, outfile, progressFile):
 
 def test0_run_simulation(datapath=None, outpath=None):
 
-    outfile, progressFile = get_demotest_file_names(outpath)
+    from get_demotest_file_names import get_demotest_file_names
+    outfile, progressFile = \
+    get_demotest_file_names(outpath, filename_outfile, filenameProgress)
 
     run_simulation(datapath, savfile, snpfile, outfile, progressFile)
 
     print('\nDone', system_name, 'dynamics simulation')
 
 
-import numpy as np
 
-def test1_data_extraction(printCommand, show, outpath=None):
-    print('Hi! Commencing test1_data_extraction.\n')
-    import dyntools
-    import numpy as np
-    outfile, progressFile = get_demotest_file_names(outpath)
-    print(outfile)
-
-    # create object
-    chnfobj = dyntools.CHNF(outfile)
-
-    print('\n Testing call to get_data')
-    sh_ttl, ch_id, ch_data = chnfobj.get_data()
-    if printCommand:
-        print(sh_ttl)
-        print(ch_id)
-
-    print('\n Testing call to get_id')
-    sh_ttl, ch_id = chnfobj.get_id()
-    if printCommand:
-        print(sh_ttl)
-        print(ch_id)
-
-    print('\n Testing call to get_range')
-    ch_range = chnfobj.get_range()
-    if printCommand:
-        print(ch_range)
-
-    print('\n Testing call to get_scale')
-    ch_scale = chnfobj.get_scale()
-    if printCommand:
-        print(ch_scale)
-
-    print('\n Testing call to print_scale')
-    if printCommand or printScale:
-        chnfobj.print_scale()
-
-    print('\n Testing call to txtout')
-
-    chnfobj.txtout(channels=list(chosen_channels))
-
-    print('\n Testing call to xlsout')
-
-    if os.path.exists(filename_xlsx):
-        os.remove(filename_xlsx)
-
-    chnfobj.xlsout(channels=list(chosen_channels), show=show)
 
 if __name__ == '__main__':
 
     import psse34  #noqa: F401
     simulation_inputs_folder_name = 'simulation_inputs/'
     simulation_outputs_folder_name = 'simulation_outputs/'
-    run_number = 1;
+    run_number = 3;
     system_name = 'ieee9'
     # system_name = 'ieee39'
     printCommand = 0
@@ -408,7 +333,10 @@ if __name__ == '__main__':
     test0_run_simulation(datapath, outpath)
     print('\nAttempting to run test1')
     # printCommand = 0
-    test1_data_extraction(printCommand, show, outpath)
+    from test1_data_extraction import test1_data_extraction
+    test1_data_extraction(show, filename_outfile,\
+     filenameProgress, filename_xlsx, \
+      printScale, printCommand, chosen_channels, outpath)
 
     end = time.time()
     print('Time elapsed = ', end-start)
