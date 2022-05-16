@@ -18,59 +18,11 @@ start = time.time()
 def run_simulation(datapath, savfile, snpfile, outfile, progressFile):
 
     import psspy
-    psspy.psseinit(50000)
 
-    if datapath:
-        savfile = os.path.join(datapath, savfile)
-        snpfile = os.path.join(datapath, snpfile)
-
-    psspy.lines_per_page_one_device(1, 10000000)
-    psspy.lines_per_page_one_device(2, 10000000)
-    psspy.progress_output(2, progressFile, [0, 0])
-
-    ierr = psspy.case(savfile)
-    if ierr:
-        psspy.progress_output(1, "", [0, 0])
-        print(" psspy.case Error")
-        return
-
-    import numpy as np
-
-    ierr, numBuses = psspy.abuscount(-1, 2)
-    global volts
-    volts = np.empty((0, numBuses))
-
-    ierr, numBranches = psspy.aflowcount(-1, 1, 1, 2)
-    global currents
-    currents = np.empty((0, numBranches))
-
-    ierr = psspy.rstr(snpfile)
-    if ierr:
-        psspy.progress_output(1, "", [0, 0])
-        print(" psspy.rstr Error")
-        return
-
-    psspy.lines_per_page_one_device(1, 10000000)
-
-    # psspy.dynamics_solution_param_2(realar3=0.001)
-    psspy.dynamics_solution_param_2(realar3=0.01)
-    # psspy.dynamics_solution_param_2(realar3=0.0333)
-
-    ierr, mbase1 = psspy.macdat(1, '1', 'MBASE')
-    print('mbase1 =', mbase1)
-    ierr, mbase2 = psspy.macdat(2, '1', 'MBASE')
-    ierr, mbase3 = psspy.macdat(3, '1', 'MBASE')
-    # add dummy governor without droop and time constants
-    ierr = psspy.add_plant_model(1,'1',7,r"""IEESGO""",0,"",0,[],[],\
-    11,[0.0,0.0,0.05,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0])
-    # print('ierr for add_plant_model =', ierr)
-    ierr = psspy.add_plant_model(2,'1',7,r"""IEESGO""",0,"",0,[],[],\
-    11,[0.0,0.0,0.05,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0])
-    ierr = psspy.add_plant_model(3,'1',7,r"""IEESGO""",0,"",0,[],[],\
-    11,[0.0,0.0,0.05,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0])
-    psspy.machine_array_channel([-1,6, 1], '1' ,"")
-    psspy.machine_array_channel([-1,6, 2], '1' ,"")
-    psspy.machine_array_channel([-1,6, 3], '1' ,"")
+    from apply_simulation_parameters import apply_simulation_parameters
+    mbase1, mbase2, mbase3 = \
+    apply_simulation_parameters(datapath, savfile, snpfile, \
+    outfile, progressFile)
 
     psspy.strt(0, outfile)
     psspy.run(0, 0.99, 1, 1, 0)
@@ -86,9 +38,6 @@ def run_simulation(datapath, savfile, snpfile, outfile, progressFile):
         load_increment_bus001 = 27.0
         load_increment_bus002 = 29.0
         load_increment_bus003 = 21.0
-        # load_increment_bus001 = 7.0
-        # load_increment_bus002 = 9.0
-        # load_increment_bus003 = 8.0
 
         ierr = psspy.bsyso(1, 5)
         ierr = psspy.bsyso(2, 6)
@@ -213,7 +162,7 @@ def run_simulation(datapath, savfile, snpfile, outfile, progressFile):
 
         psspy.run(0, t, 1, 1, 0)
 
-        checkpointString = ' Yebuseyo!? ' + str(round(t, 2)) +'\n'
+        checkpointString = ' Yebuseyo!? ' + str(round(t, 2)) + '\n'
         psspy.progress(checkpointString)
 
         from check_simulation_health import check_simulation_health
@@ -252,7 +201,7 @@ if __name__ == '__main__':
     t_increment = 0.1
 
     if system_name == 'ieee9':
-        chosen_channels = np.arange(1, 42)
+        chosen_channels = np.arange(1, 43)
     elif system_name == 'ieee39':
         chosen_channels = np.arange(1, 140)
     else:
