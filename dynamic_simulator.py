@@ -1,5 +1,5 @@
 import os
-import sys  # noqa: F401
+import sys
 import contextlib
 import pssepath
 pssepath.add_pssepath()
@@ -14,7 +14,8 @@ freq = 440  # also for alert sound
 
 start = time.time()
 
-def run_simulation(datapath, savfile, snpfile, outfile, progressFile):
+def run_simulation(datapath, savfile, snpfile, outfile, \
+progressFile, load_increments):
 
     import psspy
 
@@ -33,9 +34,10 @@ def run_simulation(datapath, savfile, snpfile, outfile, progressFile):
     t_end = 600.00
 
     if system_name == 'ieee9':
-        load_increment_bus001 = 27.0
-        load_increment_bus002 = 29.0
-        load_increment_bus003 = 21.0
+
+        load_increment_bus001 = load_increments[0]
+        load_increment_bus002 = load_increments[1]
+        load_increment_bus003 = load_increments[2]
 
         ierr = psspy.bsyso(1, 5)
         ierr = psspy.bsyso(2, 6)
@@ -84,12 +86,12 @@ def run_simulation(datapath, savfile, snpfile, outfile, progressFile):
 
             change_percent1 = load_increment_bus001/60 * t_increment \
             + white_noise1 * t_increment_whiteNoise
+            print(change_percent1)
 
             ierr, totals, moto = psspy.scal_2(1, 1, 0, \
             [psspy._i, 2, 0, 1, 0], \
             [change_percent1, 0.0, 0.0, 0.0, 0.0, -0.0, 0.0])
 
-            # dp1 = current_load1[0]/60 * t_increment
             if current_load1[0] >= 120 and run_number == 2:
                 dp1 = 0
             else:
@@ -97,7 +99,6 @@ def run_simulation(datapath, savfile, snpfile, outfile, progressFile):
 
             print('dp1 = ', dp1)
             ierr = psspy.increment_gref(1,'1', dp1*1.8/mbase1)
-            # print('ierr for psspy.increment_gref =', ierr)
 
             ierr, current_load2 = psspy.aloadreal(2, 4, "TOTALACT")
             current_load2 = current_load2[0]
@@ -110,7 +111,6 @@ def run_simulation(datapath, savfile, snpfile, outfile, progressFile):
             [psspy._i, 2, 0, 1, 0], \
             [change_percent2, 0.0, 0.0, 0.0, 0.0, -0.0, 0.0])
 
-            # dp2 = current_load2[0]/60 * t_increment
             dp2 = current_load2[0] * change_percent2/100
             print('dp2 = ', dp2)
             psspy.increment_gref(2,'1', dp2*1.8/mbase2)
@@ -124,7 +124,6 @@ def run_simulation(datapath, savfile, snpfile, outfile, progressFile):
             [psspy._i, 2, 0, 1, 0], \
             [change_percent3, 0.0, 0.0, 0.0, 0.0, -0.0, 0.0])
 
-            # dp3 = current_load3[0]/60 * t_increment
             dp3 = current_load3[0] * change_percent3/100
             print('dp3 = ', dp3)
             psspy.increment_gref(3,'1', dp3*1.8/mbase3)
@@ -172,31 +171,31 @@ def run_simulation(datapath, savfile, snpfile, outfile, progressFile):
     psspy.progress_output(1, "", [0, 0])
 
 
-def test0_run_simulation(datapath=None, outpath=None):
+def test0_run_simulation(load_increments, datapath=None, outpath=None):
 
     from get_demotest_file_names import get_demotest_file_names
     outfile, progressFile = \
     get_demotest_file_names(outpath, filename_outfile, filenameProgress)
 
-    run_simulation(datapath, savfile, snpfile, outfile, progressFile)
+    run_simulation(datapath, savfile, snpfile, outfile, \
+    progressFile, load_increments)
 
     print('\nDone', system_name, 'dynamics simulation')
-
-
-
 
 if __name__ == '__main__':
 
     import psse34  #noqa: F401
     simulation_inputs_folder_name = 'simulation_inputs/'
     simulation_outputs_folder_name = 'simulation_outputs/'
-    run_number = 3;
+    run_number = 2;
     system_name = 'ieee9'
     # system_name = 'ieee39'
     printCommand = 0
     printScale = 1
     allowLimitBreach = 1 #allow machine generations to cross limits
     t_increment = 0.1
+    import numpy as np
+    load_increments = np.array([27, 29, 21], dtype = float)
 
     if system_name == 'ieee9':
         chosen_channels = np.arange(1, 43)
@@ -231,9 +230,9 @@ if __name__ == '__main__':
     outpath = None
 
     print('\nAttempting to run test0 : Simulation of', system_name)
-    test0_run_simulation(datapath, outpath)
+    test0_run_simulation(load_increments, datapath, outpath)
+
     print('\nAttempting to run test1')
-    # printCommand = 0
     from test1_data_extraction import test1_data_extraction
     test1_data_extraction(show, filename_outfile,\
      filenameProgress, filename_xlsx, \
