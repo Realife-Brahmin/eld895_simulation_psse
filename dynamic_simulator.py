@@ -45,6 +45,7 @@ progressFile, load_increments):
         ierr = psspy.bsyso(4, 1)
         ierr = psspy.bsyso(5, 2)
         ierr = psspy.bsyso(6, 3)
+        ierr = psspy.bsyso(7, 7)
 
     elif system_name == 'ieee39':
         load_increment_bus001 = 22.0
@@ -52,10 +53,16 @@ progressFile, load_increments):
         load_increment_bus001 = 22.0
 
     if run_number == 3:
-        ierr, xarray = psspy.abrncplx(-1, 1, 1, 1, 1, 'RX')
+        ierr, xarray = psspy.abrncplx(7, 2, 3, 2, 1, 'RX')
         print('ierr for abrncplx = ', ierr)
         print('xarray for abrncplx = ', xarray)
-        checkpointString = ' Ohaiyo!? ' + str(ierr) + " " + str(xarray[0]) +'\n'
+        xarray = xarray[0]
+        z = xarray[0]
+        # print("Type of retrieved z is: ", type(z))
+        r = z.real
+        x = z.imag
+        checkpointString = ' Ohaiyo!? ierr =  ' \
+        + str(ierr) + " and impedance array is " + str(xarray) +'\n'
         psspy.progress(checkpointString)
 
     for t in np.arange(t_start, t_end + t_increment, t_increment):
@@ -64,7 +71,7 @@ progressFile, load_increments):
         std_white_noise = 0.01 # white noise standard deviation
         t_increment_whiteNoise = 0.1
 
-        if round(((t - t_start)/t_increment),2) % 3.0 == 0:
+        if round(((t - t_start)/t_increment), 2) % 3.0 == 0:
             # print('White noise is added at this time.')
             white_noise1 = \
             np.random.normal(0, std_white_noise, size = 1)[0]*100
@@ -108,7 +115,7 @@ progressFile, load_increments):
             + white_noise2 * t_increment_whiteNoise
 
             ierr, totals, moto = psspy.scal_2(2, 1, 0, \
-            [psspy._i, 2, 0, 1, 0], \
+            [psspy._i, 2, 0, 1, 0], \s
             [change_percent2, 0.0, 0.0, 0.0, 0.0, -0.0, 0.0])
 
             dp2 = current_load2[0] * change_percent2/100
@@ -130,6 +137,8 @@ progressFile, load_increments):
 
             ierr, loss = psspy.aflowreal(-1, 2, 1, 1, 'PLOSS')
             losses = loss[0]
+            stringLoss = "Current Losses in all branches are: " + str(losses)
+            psspy.progress(stringLoss)
             print('Total loss = ', losses[0:8])
 
         elif system_name == 'ieee39':
@@ -187,7 +196,7 @@ if __name__ == '__main__':
     import psse34  #noqa: F401
     simulation_inputs_folder_name = 'simulation_inputs/'
     simulation_outputs_folder_name = 'simulation_outputs/'
-    run_number = 2;
+    run_number = 3;
     system_name = 'ieee9'
     # system_name = 'ieee39'
     printCommand = 0
