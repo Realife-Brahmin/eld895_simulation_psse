@@ -115,7 +115,7 @@ progressFile, load_increments):
             + white_noise2 * t_increment_whiteNoise
 
             ierr, totals, moto = psspy.scal_2(2, 1, 0, \
-            [psspy._i, 2, 0, 1, 0], \s
+            [psspy._i, 2, 0, 1, 0],
             [change_percent2, 0.0, 0.0, 0.0, 0.0, -0.0, 0.0])
 
             dp2 = current_load2[0] * change_percent2/100
