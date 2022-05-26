@@ -2,9 +2,10 @@ import os
 import sys
 import contextlib
 import pssepath
-pssepath.add_pssepath(34)
-# pssepath.add_pssepath()
+pssepath.add_pssepath()
+
 import numpy as np
+import psse34
 import psspy
 import excelpy
 
@@ -192,7 +193,7 @@ if __name__ == '__main__':
     import psse34  #noqa: F401
     simulation_inputs_folder_name = 'simulation_inputs/'
     simulation_outputs_folder_name = 'simulation_outputs/'
-    run_number = 3;
+    run_number = 1;
     impedanceChanged = 0;
     system_name = 'ieee9'
     # system_name = 'ieee39'
@@ -204,7 +205,7 @@ if __name__ == '__main__':
     load_increments = np.array([27, 29, 21], dtype = float)
 
     if system_name == 'ieee9':
-        chosen_channels = np.arange(1, 43)
+        chosen_channels = np.arange(1, 114)
     elif system_name == 'ieee39':
         chosen_channels = np.arange(1, 140)
     else:
