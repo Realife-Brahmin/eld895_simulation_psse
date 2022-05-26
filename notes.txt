@@ -7,6 +7,7 @@ Add white noise to the data.
 Who is supporting the load (which generators are changing by how much)? Get graphs of generations.
 Effect of speed damping values. It removes the uptick in voltages.
 Remove governors and increase governor set points. Why is generator 3 not increasing?
+Talk to Suravi ma'am.
 
 Semi-done:
 Read Kundur and ensure you fit Type IV Generators and Type II Governors and Exciters in your PSSE model.
@@ -15,8 +16,6 @@ What about PSS models? Remove it?
 Delayed:
 Couldn't make fourth order generator in PSSE. Throws an error.
 PSSE gives me a warning when trying to run a simulation at DELTA = 0.0333 instead of 0.001 via GENROU Tdo'' and Tqo'' values at Bus 3.
-Talk to Suravi ma'am.
-Explore Extended Time Simulation.
 
 Long shot:
 Provide an analytical justificantion on why CSD is observed differently for different parameters and state variables.

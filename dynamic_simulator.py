@@ -2,7 +2,8 @@ import os
 import sys
 import contextlib
 import pssepath
-pssepath.add_pssepath()
+pssepath.add_pssepath(34)
+# pssepath.add_pssepath()
 import numpy as np
 import psspy
 import excelpy
@@ -15,7 +16,7 @@ freq = 440  # also for alert sound
 start = time.time()
 
 def run_simulation(datapath, savfile, snpfile, outfile, \
-progressFile, load_increments):
+progressFile, load_increments, impedanceChanged):
 
     import psspy
 
@@ -31,13 +32,9 @@ progressFile, load_increments):
     import random as rn
 
     t_start = 1.00
-    t_end = 600.00
+    t_end = 100.00
 
     if system_name == 'ieee9':
-
-        load_increment_bus001 = load_increments[0]
-        load_increment_bus002 = load_increments[1]
-        load_increment_bus003 = load_increments[2]
 
         ierr = psspy.bsyso(1, 5)
         ierr = psspy.bsyso(2, 6)
@@ -47,26 +44,47 @@ progressFile, load_increments):
         ierr = psspy.bsyso(6, 3)
         ierr = psspy.bsyso(7, 7)
 
+        load_increment_bus001 = load_increments[0]
+        load_increment_bus002 = load_increments[1]
+        load_increment_bus003 = load_increments[2]
+
     elif system_name == 'ieee39':
         load_increment_bus001 = 22.0
     else:
         load_increment_bus001 = 22.0
 
-    if run_number == 3:
-        ierr, xarray = psspy.abrncplx(7, 2, 3, 2, 1, 'RX')
-        print('ierr for abrncplx = ', ierr)
-        print('xarray for abrncplx = ', xarray)
-        xarray = xarray[0]
-        z = xarray[0]
-        # print("Type of retrieved z is: ", type(z))
-        r = z.real
-        x = z.imag
-        checkpointString = ' Ohaiyo!? ierr =  ' \
-        + str(ierr) + " and impedance array is " + str(xarray) +'\n'
-        psspy.progress(checkpointString)
 
     for t in np.arange(t_start, t_end + t_increment, t_increment):
         print('The time is now:', round(t, 2))
+
+
+
+        if impedanceChanged == 0 and \
+        round(t, 2) == t_start + 500*t_increment and run_number == 3:
+            ierr, xarray = psspy.abrncplx(7, 2, 3, 2, 1, 'RX')
+            print('ierr for abrncplx = ', ierr)
+            print('xarray for abrncplx = ', xarray)
+            xarray = xarray[0]
+            z = xarray[0]
+            r = z.real
+            x = z.imag
+            checkpointString = ' Ohaiyo!? ierr =  ' \
+            + str(ierr) + " and impedance array is " + str(xarray) +'\n'
+            psspy.progress(checkpointString)
+            ierr = psspy.branch_data_3(7, 5, realar1 = 1000*r, realar3 = 1000*x)
+            print('ierr for branch_data_3 = ', ierr)
+            ierr, xarray = psspy.abrncplx(7, 2, 3, 2, 1, 'RX')
+            print('ierr for abrncplx = ', ierr)
+            print('xarray for abrncplx = ', xarray)
+            xarray = xarray[0]
+            z = xarray[0]
+            print('New value of impedance is: ', z)
+            # print("Type of retrieved z is: ", type(z))
+            checkpointString = ' Arigato Gozaimasu! ierr =  ' \
+            + str(ierr) + " and impedance array is " + str(xarray) +'\n'
+            psspy.progress(checkpointString)
+            impedanceChanged = 1
+
 
         std_white_noise = 0.01 # white noise standard deviation
         t_increment_whiteNoise = 0.1
@@ -85,86 +103,62 @@ progressFile, load_increments):
             white_noise2 = 0
             white_noise3 = 0
 
-        if system_name == 'ieee9':
 
-            ierr, current_load1 = psspy.aloadreal(1, 4, "TOTALACT")
-            current_load1 = current_load1[0]
-            print('current_load1 =', round(current_load1[0], 3))
+        change_percent1 = load_increment_bus001/60 * t_increment \
+        + white_noise1 * t_increment_whiteNoise
+        change_percent2 = load_increment_bus002/60 * t_increment \
+        + white_noise2 * t_increment_whiteNoise
+        change_percent3 = load_increment_bus003/60 * t_increment \
+        + white_noise3 * t_increment_whiteNoise
 
-            change_percent1 = load_increment_bus001/60 * t_increment \
-            + white_noise1 * t_increment_whiteNoise
-            print(change_percent1)
+        ierr, current_load1 = psspy.aloadreal(1, 4, "TOTALACT")
+        current_load1 = current_load1[0]
+        print('current_load1 =', round(current_load1[0], 3))
 
+        ierr, current_load2 = psspy.aloadreal(2, 4, "TOTALACT")
+        current_load2 = current_load2[0]
+
+        ierr, current_load3 = psspy.aloadreal(3, 4, "TOTALACT")
+        current_load3 = current_load3[0]
+
+        if not impedanceChanged:
             ierr, totals, moto = psspy.scal_2(1, 1, 0, \
             [psspy._i, 2, 0, 1, 0], \
             [change_percent1, 0.0, 0.0, 0.0, 0.0, -0.0, 0.0])
-
-            if current_load1[0] >= 120 and run_number == 2:
-                dp1 = 0
-            else:
-                dp1 = current_load1[0] * change_percent1/100
-
-            print('dp1 = ', dp1)
-            ierr = psspy.increment_gref(1,'1', dp1*1.8/mbase1)
-
-            ierr, current_load2 = psspy.aloadreal(2, 4, "TOTALACT")
-            current_load2 = current_load2[0]
-            print('current_load2 = ', current_load2)
-
-            change_percent2 = load_increment_bus002/60 * t_increment \
-            + white_noise2 * t_increment_whiteNoise
 
             ierr, totals, moto = psspy.scal_2(2, 1, 0, \
             [psspy._i, 2, 0, 1, 0],
             [change_percent2, 0.0, 0.0, 0.0, 0.0, -0.0, 0.0])
 
             dp2 = current_load2[0] * change_percent2/100
-            print('dp2 = ', dp2)
-            psspy.increment_gref(2,'1', dp2*1.8/mbase2)
-
-            ierr, current_load3 = psspy.aloadreal(3, 4, "TOTALACT")
-            current_load3 = current_load3[0]
-            change_percent3 = load_increment_bus003/60 * t_increment \
-            + white_noise3 * t_increment_whiteNoise
 
             ierr, totals, moto = psspy.scal_2(3, 1, 0, \
             [psspy._i, 2, 0, 1, 0], \
             [change_percent3, 0.0, 0.0, 0.0, 0.0, -0.0, 0.0])
 
             dp3 = current_load3[0] * change_percent3/100
-            print('dp3 = ', dp3)
-            psspy.increment_gref(3,'1', dp3*1.8/mbase3)
 
-            ierr, loss = psspy.aflowreal(-1, 2, 1, 1, 'PLOSS')
-            losses = loss[0]
-            stringLoss = "Current Losses in all branches are: " + str(losses)
-            psspy.progress(stringLoss)
-            print('Total loss = ', losses[0:8])
-
-        elif system_name == 'ieee39':
-            ierr, current_load1 = psspy.aloadreal(-1, 4, "TOTALACT")
-            current_load1 = current_load1[0]
-            print('current_load1 =', round(current_load1[0], 3))
-
-            change_percent1 = load_increment_bus001/60 * t_increment \
-            + white_noise1 * t_increment_whiteNoise
-
-            ierr, totals, moto = psspy.scal_2(-1, 1, 0, \
-            [psspy._i, 2, 0, 1, 0], \
-            [change_percent1, 0.0, 0.0, 0.0, 0.0, -0.0, 0.0])
-
+            if current_load1[0] >= 120 and run_number == 2:
+                dp1 = 0
+            else:
+                dp1 = current_load1[0] * change_percent1/100
         else:
-            ierr, current_load1 = psspy.aloadreal(-1, 4, "TOTALACT")
-            current_load1 = current_load1[0]
-            print('current_load1 =', round(current_load1[0], 3))
+            dp1 = 0
+            dp2 = 0
+            dp3 = 0
 
-            change_percent1 = load_increment_bus001/60 * t_increment \
-            + white_noise1 * t_increment_whiteNoise
+        print('dp1 = ', dp1)
+        ierr = psspy.increment_gref(1,'1', dp1*1.8/mbase1)
+        print('dp2 = ', dp2)
+        psspy.increment_gref(2,'1', dp2*1.8/mbase2)
+        print('dp3 = ', dp3)
+        psspy.increment_gref(3,'1', dp3*1.8/mbase3)
 
-            ierr, totals, moto = psspy.scal_2(-1, 1, 0, \
-            [psspy._i, 2, 0, 1, 0], \
-            [change_percent1, 0.0, 0.0, 0.0, 0.0, -0.0, 0.0])
-
+        ierr, loss = psspy.aflowreal(-1, 2, 1, 1, 'PLOSS')
+        losses = loss[0]
+        stringLoss = "Current Losses in all branches are: " + str(losses)
+        psspy.progress(stringLoss)
+        print('Total loss = ', losses[0:8])
 
         psspy.run(0, t, 1, 1, 0)
 
@@ -176,18 +170,20 @@ progressFile, load_increments):
         if exitFlag:
             break
 
+    return impedanceChanged
     psspy.lines_per_page_one_device(2, 10000000)
     psspy.progress_output(1, "", [0, 0])
 
 
-def test0_run_simulation(load_increments, datapath=None, outpath=None):
+def test0_run_simulation(load_increments, impedanceChanged, \
+datapath=None, outpath=None):
 
     from get_demotest_file_names import get_demotest_file_names
     outfile, progressFile = \
     get_demotest_file_names(outpath, filename_outfile, filenameProgress)
 
-    run_simulation(datapath, savfile, snpfile, outfile, \
-    progressFile, load_increments)
+    impedanceChanged = run_simulation(datapath, savfile, snpfile, outfile, \
+    progressFile, load_increments, impedanceChanged)
 
     print('\nDone', system_name, 'dynamics simulation')
 
@@ -197,6 +193,7 @@ if __name__ == '__main__':
     simulation_inputs_folder_name = 'simulation_inputs/'
     simulation_outputs_folder_name = 'simulation_outputs/'
     run_number = 3;
+    impedanceChanged = 0;
     system_name = 'ieee9'
     # system_name = 'ieee39'
     printCommand = 0
@@ -239,7 +236,8 @@ if __name__ == '__main__':
     outpath = None
 
     print('\nAttempting to run test0 : Simulation of', system_name)
-    test0_run_simulation(load_increments, datapath, outpath)
+    test0_run_simulation(load_increments, impedanceChanged, \
+     datapath, outpath)
 
     print('\nAttempting to run test1')
     from test1_data_extraction import test1_data_extraction
